@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 from services.ai_service import interpret_astrology, astrology_followup
 from handlers.start import MAIN_KEYBOARD
 
-SIGN_INPUT, SIGN_CHOICE, FORECAST_TYPE, FOLLOW_UP = range(10, 14)
+SIGN_CHOICE, FORECAST_TYPE, FOLLOW_UP = range(11, 14)
 
 SIGN_KEYBOARD = ReplyKeyboardMarkup(
     [
@@ -11,7 +11,7 @@ SIGN_KEYBOARD = ReplyKeyboardMarkup(
         ['♋ Рак', '♌ Лев', '♍ Дева'],
         ['♎ Весы', '♏ Скорпион', '♐ Стрелец'],
         ['♑ Козерог', '♒ Водолей', '♓ Рыбы'],
-        ['❌ Отмена']
+        ['🔙 Назад']
     ],
     resize_keyboard=True
 )
@@ -21,7 +21,7 @@ TYPE_KEYBOARD = ReplyKeyboardMarkup(
         ['📅 Прогноз на день'],
         ['📆 Прогноз на месяц'],
         ['📊 Прогноз на год'],
-        ['❌ Отмена']
+        ['🔙 Назад']
     ],
     resize_keyboard=True
 )
@@ -30,13 +30,13 @@ AFTER_KEYBOARD = ReplyKeyboardMarkup(
     [
         ['❓ Уточнить/задать вопрос'],
         ['📅 Прогноз на день', '📆 Прогноз на месяц'],
-        ['📊 Прогноз на год', '❌ Отмена']
+        ['📊 Прогноз на год', '🔙 Назад']
     ],
     resize_keyboard=True
 )
 
-CANCEL_KEYBOARD = ReplyKeyboardMarkup(
-    [['❌ Отмена']],
+BACK_KEYBOARD = ReplyKeyboardMarkup(
+    [['🔙 Назад']],
     resize_keyboard=True
 )
 
@@ -79,8 +79,8 @@ async def astrology_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def sign_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await update.message.reply_text('Отменено.', reply_markup=MAIN_KEYBOARD)
+    if text in ('🔙 Назад', '📋 Главное меню'):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     sign = _parse_sign(text)
@@ -103,8 +103,16 @@ async def sign_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def forecast_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await update.message.reply_text('Отменено.', reply_markup=MAIN_KEYBOARD)
+    if text == '🔙 Назад':
+        await update.message.reply_text(
+            '🔮 *Астрология*\n\n'
+            'Выбери свой знак зодиака или введи название:',
+            parse_mode='Markdown',
+            reply_markup=SIGN_KEYBOARD
+        )
+        return SIGN_CHOICE
+    if text in ('📋 Главное меню',):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     type_map = {
@@ -141,14 +149,20 @@ async def forecast_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def follow_up(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await update.message.reply_text('Отменено.', reply_markup=MAIN_KEYBOARD)
+    if text == '🔙 Назад':
+        await update.message.reply_text(
+            'Выбери период:',
+            reply_markup=TYPE_KEYBOARD
+        )
+        return FORECAST_TYPE
+    if text in ('📋 Главное меню',):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     if text == '❓ Уточнить/задать вопрос':
         await update.message.reply_text(
             'Напиши свой вопрос по прогнозу:',
-            reply_markup=CANCEL_KEYBOARD
+            reply_markup=BACK_KEYBOARD
         )
         return FOLLOW_UP
 

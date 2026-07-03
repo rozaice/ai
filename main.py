@@ -1,19 +1,26 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
 from config import BOT_TOKEN
 from handlers.start import start, main_menu
-from handlers.diary import diary_start, diary_message, DIARY_TEXT
+from handlers.diary import (
+    diary_start, diary_message, diary_after,
+    DIARY_TEXT, DIARY_AFTER
+)
 from handlers.natal import (
     natal_menu, birth_date, birth_time, birth_place,
     BIRTH_DATE, BIRTH_TIME, BIRTH_PLACE,
-    COMPAT_DATE, COMPAT_TIME, COMPAT_PLACE,
+    COMPAT_NAME, COMPAT_DATE, COMPAT_TIME, COMPAT_PLACE,
     natal_forecast_day, natal_forecast_year, natal_general,
-    natal_compatibility, compat_date, compat_time, compat_place,
+    natal_compatibility, compat_name, compat_date, compat_time, compat_place,
 )
 from handlers.tarot import (
     tarot_menu, tarot_daily, tarot_three, tarot_relationship,
     tarot_finance, tarot_career,
 )
-from handlers.numerology import numerology_start, sub_section, numerology_date, numerology_date2, SUB_SECTION, NUM_DATE, NUM_DATE2
+from handlers.numerology import (
+    numerology_start, sub_section, numerology_date,
+    numerology_date2, numerology_name2, numerology_after,
+    SUB_SECTION, NUM_DATE, NUM_DATE2, NUM_NAME2, NUM_AFTER
+)
 from handlers.astrology import (
     astrology_start, sign_choice, forecast_type, follow_up,
     SIGN_CHOICE, FORECAST_TYPE, FOLLOW_UP,
@@ -26,7 +33,8 @@ def main():
     diary_conv = ConversationHandler(
         entry_points=[MessageHandler(filters.Regex(r'^📝 Дневник состояния$'), diary_start)],
         states={
-            DIARY_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, diary_message)]
+            DIARY_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, diary_message)],
+            DIARY_AFTER: [MessageHandler(filters.TEXT & ~filters.COMMAND, diary_after)],
         },
         fallbacks=[CommandHandler('start', start)]
     )
@@ -40,6 +48,7 @@ def main():
             BIRTH_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, birth_date)],
             BIRTH_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, birth_time)],
             BIRTH_PLACE: [MessageHandler(filters.TEXT & ~filters.COMMAND, birth_place)],
+            COMPAT_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, compat_name)],
             COMPAT_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, compat_date)],
             COMPAT_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, compat_time)],
             COMPAT_PLACE: [MessageHandler(filters.TEXT & ~filters.COMMAND, compat_place)],
@@ -53,6 +62,8 @@ def main():
             SUB_SECTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, sub_section)],
             NUM_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, numerology_date)],
             NUM_DATE2: [MessageHandler(filters.TEXT & ~filters.COMMAND, numerology_date2)],
+            NUM_NAME2: [MessageHandler(filters.TEXT & ~filters.COMMAND, numerology_name2)],
+            NUM_AFTER: [MessageHandler(filters.TEXT & ~filters.COMMAND, numerology_after)],
         },
         fallbacks=[CommandHandler('start', start)]
     )

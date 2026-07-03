@@ -144,20 +144,21 @@ async def interpret_natal(chart_data: dict, forecast_type: str) -> str:
     return response.choices[0].message.content
 
 
-async def interpret_compatibility(chart1: dict, chart2: dict) -> str:
+async def interpret_compatibility(chart1: dict, chart2: dict, name1: str = "Человек 1", name2: str = "Человек 2") -> str:
     client = _get_client()
     summary1 = _summarize_chart(chart1)
     summary2 = _summarize_chart(chart2)
     prompt = (
         "Ты — профессиональный астролог. Проанализируй совместимость двух людей "
         "на основе их натальных карт. Опиши сильные стороны союза, "
-        "потенциальные сложности и дай совет. Формат свободный, 6-10 предложений."
+        "потенциальные сложности и дай совет. Используй имена людей в разборе. "
+        "Формат свободный, 6-10 предложений."
     )
     response = await client.chat.completions.create(
         model="openai/gpt-4o-mini",
         messages=[
             {"role": "system", "content": prompt},
-            {"role": "user", "content": f"Карта человека 1:\n{summary1}\n\nКарта человека 2:\n{summary2}"}
+            {"role": "user", "content": f"Карта {name1}:\n{summary1}\n\nКарта {name2}:\n{summary2}"}
         ]
     )
     return response.choices[0].message.content
@@ -195,18 +196,19 @@ async def interpret_numerology(birth_date: str, ntype: str, nums: dict | None = 
     return response.choices[0].message.content
 
 
-async def interpret_numerology_compat(date1: str, date2: str) -> str:
+async def interpret_numerology_compat(date1: str, date2: str, name1: str = "Человек 1", name2: str = "Человек 2") -> str:
     client = _get_client()
     prompt = (
         "Ты — нумеролог. Проанализируй совместимость двух людей по датам рождения. "
         "Опиши сильные стороны союза, возможные сложности и совет. "
+        "Используй имена людей в разборе. "
         "На русском, 6-8 предложений. Используй заголовки *жирным*."
     )
     response = await client.chat.completions.create(
         model="openai/gpt-4o-mini",
         messages=[
             {"role": "system", "content": prompt},
-            {"role": "user", "content": f"Человек 1: {date1}\nЧеловек 2: {date2}"}
+            {"role": "user", "content": f"{name1}: {date1}\n{name2}: {date2}"}
         ]
     )
     return response.choices[0].message.content
@@ -284,3 +286,43 @@ def _summarize_chart(chart: dict) -> str:
         for asp in chart["aspects"]:
             lines.append(f"  {asp}")
     return "\n".join(lines)
+
+
+async def interpret_pythagorean_square(date: str, square_text: str) -> str:
+    client = _get_client()
+    prompt = (
+        "Ты — нумеролог. На основе рассчитанного Квадрата Пифагора "
+        "дай разбор личности: характер, таланты, слабые стороны, "
+        "совместимость цифр. Формат свободный, 8-10 предложений, "
+        "на русском. Используй заголовки *жирным*."
+    )
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"Дата рождения: {date}\nКвадрат Пифагора:\n{square_text}"}
+        ]
+    )
+    return response.choices[0].message.content
+
+
+async def generic_followup(history: list, question: str, system_prompt: str) -> tuple[str, list]:
+    client = _get_client()
+    messages = [{"role": "system", "content": system_prompt}]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": question})
+
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=messages
+    )
+    result = response.choices[0].message.content
+
+    new_history = list(history or [])
+    new_history.append({"role": "user", "content": question})
+    new_history.append({"role": "assistant", "content": result})
+    if len(new_history) > 10:
+        new_history = new_history[-10:]
+
+    return result, new_history

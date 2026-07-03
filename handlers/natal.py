@@ -6,7 +6,7 @@ from services.astrology import calculate_chart
 from handlers.start import MAIN_KEYBOARD
 
 BIRTH_DATE, BIRTH_TIME, BIRTH_PLACE = range(1, 4)
-COMPAT_DATE, COMPAT_TIME, COMPAT_PLACE = range(4, 7)
+COMPAT_NAME, COMPAT_DATE, COMPAT_TIME, COMPAT_PLACE = range(4, 8)
 
 NATAL_KEYBOARD = ReplyKeyboardMarkup(
     [
@@ -21,13 +21,13 @@ CHOICE_KEYBOARD = ReplyKeyboardMarkup(
     [
         ['👤 Моя карта'],
         ['👥 Карта другого человека'],
-        ['❌ Отмена']
+        ['🔙 Назад']
     ],
     resize_keyboard=True
 )
 
-CANCEL_KEYBOARD = ReplyKeyboardMarkup(
-    [['❌ Отмена']],
+BACK_KEYBOARD = ReplyKeyboardMarkup(
+    [['🔙 Назад']],
     resize_keyboard=True
 )
 
@@ -37,14 +37,6 @@ TIME_RE = re.compile(r'^\d{2}[:.]\d{2}$')
 
 def _normalize_time(t: str) -> str:
     return t.replace('.', ':')
-
-
-def _get_natal_keyboard():
-    return NATAL_KEYBOARD
-
-
-async def _cancel(update: Update) -> None:
-    await update.message.reply_text('Отменено.', reply_markup=MAIN_KEYBOARD)
 
 
 async def natal_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -59,15 +51,15 @@ async def natal_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         '🔮 Для расчёта натальной карты мне нужны твои данные.\n\n'
         'Введи дату рождения в формате *ДД.ММ.ГГГГ* (например, 15.06.1995):',
         parse_mode='Markdown',
-        reply_markup=CANCEL_KEYBOARD
+        reply_markup=BACK_KEYBOARD
     )
     return BIRTH_DATE
 
 
 async def birth_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await _cancel(update)
+    if text in ('🔙 Назад', '📋 Главное меню'):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     if context.user_data.get('chart_data'):
@@ -82,7 +74,7 @@ async def birth_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(
                 'Введи дату рождения этого человека в формате *ДД.ММ.ГГГГ*:',
                 parse_mode='Markdown',
-                reply_markup=CANCEL_KEYBOARD
+                reply_markup=BACK_KEYBOARD
             )
             return BIRTH_DATE
 
@@ -100,15 +92,22 @@ async def birth_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'Отлично! Теперь введи время рождения в формате *ЧЧ:ММ* или *ЧЧ.ММ* (например, 14:30).\n'
         'Если время неизвестно — введи *12:00*.',
         parse_mode='Markdown',
-        reply_markup=CANCEL_KEYBOARD
+        reply_markup=BACK_KEYBOARD
     )
     return BIRTH_TIME
 
 
 async def birth_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await _cancel(update)
+    if text == '🔙 Назад':
+        await update.message.reply_text(
+            '🔮 Введи дату рождения в формате *ДД.ММ.ГГГГ*:',
+            parse_mode='Markdown',
+            reply_markup=BACK_KEYBOARD
+        )
+        return BIRTH_DATE
+    if text in ('📋 Главное меню',):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     if not TIME_RE.match(text):
@@ -126,22 +125,29 @@ async def birth_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'Последний шаг! Введи *город рождения* (например, Москва).\n'
         'Я определю координаты для точного расчёта.',
         parse_mode='Markdown',
-        reply_markup=CANCEL_KEYBOARD
+        reply_markup=BACK_KEYBOARD
     )
     return BIRTH_PLACE
 
 
 async def birth_place(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await _cancel(update)
+    if text == '🔙 Назад':
+        await update.message.reply_text(
+            'Отлично! Теперь введи время рождения в формате *ЧЧ:ММ* или *ЧЧ.ММ* (например, 14:30).\n'
+            'Если время неизвестно — введи *12:00*.',
+            parse_mode='Markdown',
+            reply_markup=BACK_KEYBOARD
+        )
+        return BIRTH_TIME
+    if text in ('📋 Главное меню',):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     msg = await update.message.reply_text('🔭 Рассчитываю натальную карту...')
 
     date = context.user_data.get('birth_date')
     time = context.user_data.get('birth_time')
-
     lat, lon = _get_coords(text)
 
     try:
@@ -149,20 +155,17 @@ async def birth_place(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['chart_data'] = chart
         context.user_data['user_birth_place'] = text
 
-        simple = (
-            f'✅ *Натальная карта рассчитана!*\n\n'
-            f'🌍 *Город:* {text}\n'
-        )
+        simple = (f'✅ *Натальная карта рассчитана!*\n\n'
+                  f'🌍 *Город:* {text}\n')
         if 'ascendant' in chart:
             simple += f'♈ *ASC:* {chart["ascendant"]}\n'
         if 'planets' in chart:
-            simple += f'☀️ *Солнце:* {chart["planets"].get("Солнце", {}).get("sign", "—")} '
-            simple += f'{chart["planets"].get("Солнце", {}).get("degree", "")}°\n'
-            simple += f'🌙 *Луна:* {chart["planets"].get("Луна", {}).get("sign", "—")} '
-            simple += f'{chart["planets"].get("Луна", {}).get("degree", "")}°\n'
+            simple += (f'☀️ *Солнце:* {chart["planets"].get("Солнце", {}).get("sign", "—")} '
+                       f'{chart["planets"].get("Солнце", {}).get("degree", "")}°\n')
+            simple += (f'🌙 *Луна:* {chart["planets"].get("Луна", {}).get("sign", "—")} '
+                       f'{chart["planets"].get("Луна", {}).get("degree", "")}°\n')
 
         await msg.edit_text(simple, parse_mode='Markdown')
-
     except Exception as e:
         await msg.edit_text(f'❌ Ошибка расчёта: {e}')
         context.user_data['chart_data'] = None
@@ -184,17 +187,41 @@ async def natal_compatibility(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     await update.message.reply_text(
         '💞 *Совместимость*\n\n'
-        'Введи *дату рождения* второго человека в формате *ДД.ММ.ГГГГ*:',
+        'Как зовут человека, с которым хочешь проверить совместимость?',
         parse_mode='Markdown',
-        reply_markup=CANCEL_KEYBOARD
+        reply_markup=BACK_KEYBOARD
+    )
+    return COMPAT_NAME
+
+
+async def compat_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    if text in ('🔙 Назад', '📋 Главное меню'):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
+        return ConversationHandler.END
+
+    context.user_data['compat_name'] = text.strip()
+
+    await update.message.reply_text(
+        f'Отлично! Теперь введи *дату рождения* *{text.strip()}* в формате *ДД.ММ.ГГГГ*:',
+        parse_mode='Markdown',
+        reply_markup=BACK_KEYBOARD
     )
     return COMPAT_DATE
 
 
 async def compat_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await _cancel(update)
+    if text == '🔙 Назад':
+        await update.message.reply_text(
+            '💞 *Совместимость*\n\n'
+            'Как зовут человека, с которым хочешь проверить совместимость?',
+            parse_mode='Markdown',
+            reply_markup=BACK_KEYBOARD
+        )
+        return COMPAT_NAME
+    if text in ('📋 Главное меню',):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     if not DATE_RE.match(text):
@@ -207,17 +234,26 @@ async def compat_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['compat_date'] = text
 
     await update.message.reply_text(
-        'Теперь введи *время рождения* в формате *ЧЧ:ММ* или *ЧЧ.ММ* (или 12:00, если неизвестно):',
+        'Теперь введи *время рождения* в формате *ЧЧ:ММ* или *ЧЧ.ММ* '
+        '(или 12:00, если неизвестно):',
         parse_mode='Markdown',
-        reply_markup=CANCEL_KEYBOARD
+        reply_markup=BACK_KEYBOARD
     )
     return COMPAT_TIME
 
 
 async def compat_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await _cancel(update)
+    if text == '🔙 Назад':
+        await update.message.reply_text(
+            f'Введи *дату рождения* *{context.user_data.get("compat_name", "человека")}* '
+            f'в формате *ДД.ММ.ГГГГ*:',
+            parse_mode='Markdown',
+            reply_markup=BACK_KEYBOARD
+        )
+        return COMPAT_DATE
+    if text in ('📋 Главное меню',):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     if not TIME_RE.match(text):
@@ -230,17 +266,25 @@ async def compat_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['compat_time'] = _normalize_time(text)
 
     await update.message.reply_text(
-        'Введи *город рождения* второго человека:',
+        f'Введи *город рождения* *{context.user_data.get("compat_name", "человека")}*:',
         parse_mode='Markdown',
-        reply_markup=CANCEL_KEYBOARD
+        reply_markup=BACK_KEYBOARD
     )
     return COMPAT_PLACE
 
 
 async def compat_place(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text in ('❌ Отмена', '📋 Главное меню'):
-        await _cancel(update)
+    if text == '🔙 Назад':
+        await update.message.reply_text(
+            'Теперь введи *время рождения* в формате *ЧЧ:ММ* или *ЧЧ.ММ* '
+            '(или 12:00, если неизвестно):',
+            parse_mode='Markdown',
+            reply_markup=BACK_KEYBOARD
+        )
+        return COMPAT_TIME
+    if text in ('📋 Главное меню',):
+        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     msg = await update.message.reply_text('💞 Рассчитываю совместимость...')
@@ -252,8 +296,9 @@ async def compat_place(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chart2 = calculate_chart(date, time, lat, lon)
         chart1 = context.user_data.get('chart_data')
+        name2 = context.user_data.get('compat_name', 'Человек 2')
 
-        result = await interpret_compatibility(chart1, chart2)
+        result = await interpret_compatibility(chart1, chart2, name1='Я', name2=name2)
         await msg.edit_text(
             f'💞 *Совместимость*\n\n{result}',
             parse_mode='Markdown'
@@ -296,7 +341,8 @@ async def _handle_forecast(update: Update, context: ContextTypes.DEFAULT_TYPE, f
         await msg.edit_text(f'❌ Ошибка: {e}')
 
     await update.message.reply_text(
-        'Можешь выбрать другой прогноз:', reply_markup=NATAL_KEYBOARD)
+        'Можешь выбрать другой прогноз:', reply_markup=NATAL_KEYBOARD
+    )
 
 
 async def natal_forecast_day(update: Update, context: ContextTypes.DEFAULT_TYPE):
