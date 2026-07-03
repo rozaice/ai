@@ -5,7 +5,7 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
         ['📝 Дневник состояния'],
         ['🔮 Натальная карта'],
-        ['🃏 Таро']
+        ['🃏 Таро', '🔢 Нумерология']
     ],
     resize_keyboard=True,
     is_persistent=True
@@ -18,7 +18,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'Я помогу тебе:\n'
         '📝 Вести дневник состояния с AI-анализом\n'
         '🔮 Рассчитать и разобрать натальную карту\n'
-        '🃏 Получить предсказания Таро\n\n'
+        '🃏 Получить предсказания Таро\n'
+        '🔢 Рассчитать нумерологию\n\n'
         'Выбери раздел:',
         reply_markup=MAIN_KEYBOARD
     )

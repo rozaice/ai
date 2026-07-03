@@ -62,6 +62,18 @@ SYSTEM_PROMPTS = {
         "партнёра, отношения и совет. Проинтерпретируй каждую карту "
         "и дай рекомендацию. На русском, 6-8 предложений."
     ),
+    "tarot_finance": (
+        "Ты — опытный таролог, специалист по финансовым вопросам. "
+        "У тебя расклад из 3 карт на финансовую ситуацию "
+        "(текущее положение → возможности → совет). Проинтерпретируй каждую карту "
+        "и дай рекомендацию по денежному потоку. На русском, 6-8 предложений."
+    ),
+    "tarot_career": (
+        "Ты — опытный таролог, карьерный коуч. "
+        "У тебя расклад из 3 карт на карьеру "
+        "(текущая ситуация → перспективы → совет). Проинтерпретируй каждую карту "
+        "и дай рекомендацию по профессиональному развитию. На русском, 6-8 предложений."
+    ),
 }
 
 
@@ -97,6 +109,25 @@ async def interpret_natal(chart_data: dict, forecast_type: str) -> str:
         messages=[
             {"role": "system", "content": SYSTEM_PROMPTS[prompt_key]},
             {"role": "user", "content": f"Данные натальной карты: {chart_summary}"}
+        ]
+    )
+    return response.choices[0].message.content
+
+
+async def interpret_compatibility(chart1: dict, chart2: dict) -> str:
+    client = _get_client()
+    summary1 = _summarize_chart(chart1)
+    summary2 = _summarize_chart(chart2)
+    prompt = (
+        "Ты — профессиональный астролог. Проанализируй совместимость двух людей "
+        "на основе их натальных карт. Опиши сильные стороны союза, "
+        "потенциальные сложности и дай совет. Формат свободный, 6-10 предложений."
+    )
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"Карта человека 1:\n{summary1}\n\nКарта человека 2:\n{summary2}"}
         ]
     )
     return response.choices[0].message.content

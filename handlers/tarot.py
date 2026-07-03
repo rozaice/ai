@@ -8,6 +8,8 @@ TAROT_KEYBOARD = ReplyKeyboardMarkup(
         ['🎴 Предсказание на день'],
         ['🃏 Расклад на трех картах'],
         ['💞 Расклад на отношения'],
+        ['💰 Расклад на финансы'],
+        ['💼 Расклад на карьеру'],
         ['📋 Главное меню']
     ],
     resize_keyboard=True
@@ -19,7 +21,9 @@ async def tarot_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         '🃏 *Таро* — выбери тип расклада:\n\n'
         '🎴 *На день* — одна карта-совет\n'
         '🃏 *3 карты* — прошлое / настоящее / будущее\n'
-        '💞 *Отношения* — что важно знать о твоих отношениях',
+        '💞 *Отношения* — что важно знать о твоих отношениях\n'
+        '💰 *Финансы* — денежный поток и возможности\n'
+        '💼 *Карьера* — профессиональный путь и перспективы',
         parse_mode='Markdown',
         reply_markup=TAROT_KEYBOARD
     )
@@ -78,6 +82,50 @@ async def tarot_relationship(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         await msg.edit_text(
             f'💞 *Расклад на отношения*\n\n{cards_str}\n\n{result}',
+            parse_mode='Markdown'
+        )
+    except Exception as e:
+        await msg.edit_text(f'❌ Ошибка: {e}')
+
+    await update.message.reply_text(
+        'Выбери другой расклад:', reply_markup=TAROT_KEYBOARD)
+
+
+async def tarot_finance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    cards = draw_cards(3)
+    positions = ['💰 *Текущее положение*', '📈 *Возможности*', '💡 *Совет*']
+    msg = await update.message.reply_text('💰 Раскладываю на финансы...')
+
+    try:
+        result = await interpret_tarot(cards, 'finance')
+        cards_str = '\n'.join(
+            f'{pos}\n  {c["name"]} {"(перевёрнута)" if c["reversed"] else ""} — {c["meaning"]}'
+            for pos, c in zip(positions, cards)
+        )
+        await msg.edit_text(
+            f'💰 *Расклад на финансы*\n\n{cards_str}\n\n{result}',
+            parse_mode='Markdown'
+        )
+    except Exception as e:
+        await msg.edit_text(f'❌ Ошибка: {e}')
+
+    await update.message.reply_text(
+        'Выбери другой расклад:', reply_markup=TAROT_KEYBOARD)
+
+
+async def tarot_career(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    cards = draw_cards(3)
+    positions = ['💼 *Текущая ситуация*', '🚀 *Перспективы*', '🧭 *Совет*']
+    msg = await update.message.reply_text('💼 Раскладываю на карьеру...')
+
+    try:
+        result = await interpret_tarot(cards, 'career')
+        cards_str = '\n'.join(
+            f'{pos}\n  {c["name"]} {"(перевёрнута)" if c["reversed"] else ""} — {c["meaning"]}'
+            for pos, c in zip(positions, cards)
+        )
+        await msg.edit_text(
+            f'💼 *Расклад на карьеру*\n\n{cards_str}\n\n{result}',
             parse_mode='Markdown'
         )
     except Exception as e:
