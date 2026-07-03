@@ -4,7 +4,7 @@ from telegram.ext import ContextTypes
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
         ['📝 Дневник состояния'],
-        ['🔮 Натальная карта'],
+        ['🔮 Натальная карта', '🌟 Астрология'],
         ['🃏 Таро', '🔢 Нумерология']
     ],
     resize_keyboard=True,
@@ -18,6 +18,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'Я помогу тебе:\n'
         '📝 Вести дневник состояния с AI-анализом\n'
         '🔮 Рассчитать и разобрать натальную карту\n'
+        '🌟 Получить астрологический прогноз\n'
         '🃏 Получить предсказания Таро\n'
         '🔢 Рассчитать нумерологию\n\n'
         'Выбери раздел:',

@@ -74,6 +74,36 @@ SYSTEM_PROMPTS = {
         "(текущая ситуация → перспективы → совет). Проинтерпретируй каждую карту "
         "и дай рекомендацию по профессиональному развитию. На русском, 6-8 предложений."
     ),
+    "astro_day": (
+        "Ты — профессиональный астролог. Составь краткий астрологический прогноз "
+        "на сегодня. Формат ответа (заголовки жирным):\n"
+        "*Общая информация:*\n(2-3 предложения об энергии дня)\n\n"
+        "*Сферы жизни:*\n"
+        "*Любовь:*\n(1-2 предложения)\n"
+        "*Карьера:*\n(1-2 предложения)\n"
+        "*Здоровье:*\n(1-2 предложения)\n"
+        "*Финансы:*\n(1-2 предложения)"
+    ),
+    "astro_month": (
+        "Ты — профессиональный астролог. Составь астрологический прогноз "
+        "на предстоящий месяц. Формат ответа (заголовки жирным):\n"
+        "*Общая информация:*\n(3-4 предложения об энергии месяца)\n\n"
+        "*Сферы жизни:*\n"
+        "*Любовь:*\n(2-3 предложения)\n"
+        "*Карьера:*\n(2-3 предложения)\n"
+        "*Здоровье:*\n(2-3 предложения)\n"
+        "*Финансы:*\n(2-3 предложения)"
+    ),
+    "astro_year": (
+        "Ты — профессиональный астролог. Составь астрологический прогноз "
+        "на предстоящий год. Формат ответа (заголовки жирным):\n"
+        "*Общая информация:*\n(3-4 предложения об энергии года)\n\n"
+        "*Сферы жизни:*\n"
+        "*Любовь:*\n(2-3 предложения)\n"
+        "*Карьера:*\n(2-3 предложения)\n"
+        "*Здоровье:*\n(2-3 предложения)\n"
+        "*Финансы:*\n(2-3 предложения)"
+    ),
 }
 
 
@@ -131,6 +161,48 @@ async def interpret_compatibility(chart1: dict, chart2: dict) -> str:
         ]
     )
     return response.choices[0].message.content
+
+
+async def interpret_astrology(zodiac_sign: str, forecast_type: str, chart_data: dict | None = None) -> str:
+    client = _get_client()
+    prompt_key = f"astro_{forecast_type}"
+    user_info = f"Знак зодиака: {zodiac_sign}"
+    if chart_data:
+        user_info += f"\n\nДанные натальной карты:\n{_summarize_chart(chart_data)}"
+
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPTS[prompt_key]},
+            {"role": "user", "content": user_info}
+        ]
+    )
+    return response.choices[0].message.content
+
+
+async def astrology_followup(history: list, question: str) -> tuple[str, list]:
+    client = _get_client()
+    messages = [
+        {"role": "system", "content": "Ты — профессиональный астролог. Ответь на уточняющий вопрос "
+         "по предыдущему прогнозу. Кратко, по делу, на русском."}
+    ]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": question})
+
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=messages
+    )
+    result = response.choices[0].message.content
+
+    new_history = list(history or [])
+    new_history.append({"role": "user", "content": question})
+    new_history.append({"role": "assistant", "content": result})
+    if len(new_history) > 10:
+        new_history = new_history[-10:]
+
+    return result, new_history
 
 
 async def interpret_tarot(cards: list, spread_type: str) -> str:

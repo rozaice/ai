@@ -14,6 +14,10 @@ from handlers.tarot import (
     tarot_finance, tarot_career,
 )
 from handlers.numerology import numerology_start, numerology_date, NUM_DATE
+from handlers.astrology import (
+    astrology_start, sign_choice, forecast_type, follow_up,
+    SIGN_CHOICE, FORECAST_TYPE, FOLLOW_UP,
+)
 
 
 def main():
@@ -48,12 +52,23 @@ def main():
         fallbacks=[CommandHandler('start', start)]
     )
 
+    astrology_conv = ConversationHandler(
+        entry_points=[MessageHandler(filters.Regex(r'^🌟 Астрология$'), astrology_start)],
+        states={
+            SIGN_CHOICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, sign_choice)],
+            FORECAST_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, forecast_type)],
+            FOLLOW_UP: [MessageHandler(filters.TEXT & ~filters.COMMAND, follow_up)],
+        },
+        fallbacks=[CommandHandler('start', start)]
+    )
+
     app.add_handler(CommandHandler('start', start))
     app.add_handler(MessageHandler(filters.Regex(r'^📋 Главное меню$'), main_menu))
 
     app.add_handler(diary_conv)
     app.add_handler(natal_conv)
     app.add_handler(numerology_conv)
+    app.add_handler(astrology_conv)
 
     app.add_handler(MessageHandler(filters.Regex(r'^🃏 Таро$'), tarot_menu))
 
