@@ -11,7 +11,7 @@ SIGN_KEYBOARD = ReplyKeyboardMarkup(
         ['♋ Рак', '♌ Лев', '♍ Дева'],
         ['♎ Весы', '♏ Скорпион', '♐ Стрелец'],
         ['♑ Козерог', '♒ Водолей', '♓ Рыбы'],
-        ['📋 Главное меню']
+        ['❌ Отмена']
     ],
     resize_keyboard=True
 )
@@ -21,7 +21,7 @@ TYPE_KEYBOARD = ReplyKeyboardMarkup(
         ['📅 Прогноз на день'],
         ['📆 Прогноз на месяц'],
         ['📊 Прогноз на год'],
-        ['📋 Главное меню']
+        ['❌ Отмена']
     ],
     resize_keyboard=True
 )
@@ -30,7 +30,7 @@ AFTER_KEYBOARD = ReplyKeyboardMarkup(
     [
         ['❓ Уточнить/задать вопрос'],
         ['📅 Прогноз на день', '📆 Прогноз на месяц'],
-        ['📊 Прогноз на год', '📋 Главное меню']
+        ['📊 Прогноз на год', '❌ Отмена']
     ],
     resize_keyboard=True
 )
@@ -79,8 +79,8 @@ async def astrology_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def sign_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text == '📋 Главное меню':
-        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
+    if text in ('❌ Отмена', '📋 Главное меню'):
+        await update.message.reply_text('Отменено.', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     sign = _parse_sign(text)
@@ -103,8 +103,8 @@ async def sign_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def forecast_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text == '📋 Главное меню':
-        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
+    if text in ('❌ Отмена', '📋 Главное меню'):
+        await update.message.reply_text('Отменено.', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     type_map = {
@@ -141,8 +141,8 @@ async def forecast_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def follow_up(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if text == '📋 Главное меню':
-        await update.message.reply_text('Главное меню:', reply_markup=MAIN_KEYBOARD)
+    if text in ('❌ Отмена', '📋 Главное меню'):
+        await update.message.reply_text('Отменено.', reply_markup=MAIN_KEYBOARD)
         return ConversationHandler.END
 
     if text == '❓ Уточнить/задать вопрос':
@@ -150,11 +150,6 @@ async def follow_up(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'Напиши свой вопрос по прогнозу:',
             reply_markup=CANCEL_KEYBOARD
         )
-        return FOLLOW_UP
-
-    if text == '❌ Отмена':
-        await update.message.reply_text(
-            'Что дальше?', reply_markup=AFTER_KEYBOARD)
         return FOLLOW_UP
 
     type_map = {

@@ -163,6 +163,55 @@ async def interpret_compatibility(chart1: dict, chart2: dict) -> str:
     return response.choices[0].message.content
 
 
+NUMEROLOGY_PROMPTS = {
+    "matrix": (
+        "Ты — эксперт по Матрице Судьбы (22 аркана). "
+        "На основе арканов дня, месяца, года и числа сущности дай разбор личности. "
+        "Напиши на русском, 6-8 предложений. Используй заголовки *жирным*."
+    ),
+    "chakra": (
+        "Ты — специалист по чакральной системе. "
+        "На основе даты рождения определи состояние чакр: какие открыты, "
+        "какие требуют внимания. Дай рекомендацию по гармонизации. "
+        "Напиши на русском, 6-8 предложений. Используй заголовки *жирным*."
+    ),
+}
+
+
+async def interpret_numerology(birth_date: str, ntype: str, nums: dict | None = None) -> str:
+    client = _get_client()
+    prompt = NUMEROLOGY_PROMPTS.get(ntype, "Ты — нумеролог. Дай разбор.")
+    user_info = f"Дата рождения: {birth_date}"
+    if nums:
+        user_info += f"\n{str(nums)}"
+
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": user_info}
+        ]
+    )
+    return response.choices[0].message.content
+
+
+async def interpret_numerology_compat(date1: str, date2: str) -> str:
+    client = _get_client()
+    prompt = (
+        "Ты — нумеролог. Проанализируй совместимость двух людей по датам рождения. "
+        "Опиши сильные стороны союза, возможные сложности и совет. "
+        "На русском, 6-8 предложений. Используй заголовки *жирным*."
+    )
+    response = await client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"Человек 1: {date1}\nЧеловек 2: {date2}"}
+        ]
+    )
+    return response.choices[0].message.content
+
+
 async def interpret_astrology(zodiac_sign: str, forecast_type: str, chart_data: dict | None = None) -> str:
     client = _get_client()
     prompt_key = f"astro_{forecast_type}"

@@ -160,3 +160,71 @@ def calculate_all(birth_date: str) -> dict:
         "personality": personality(birth_date),
         "birth_day": birth_day(birth_date),
     }
+
+
+def pythagorean_square(birth_date: str) -> str:
+    day, month, year = map(int, birth_date.split('.'))
+    digits = [int(d) for d in f"{day:02d}{month:02d}{year}"]
+
+    w1 = sum(digits)
+    w2 = sum(int(d) for d in str(w1))
+    w3 = w1 - 2 * digits[0]
+    w4 = sum(int(d) for d in str(abs(w3)))
+
+    nums = []
+    for n in range(1, 10):
+        count = digits.count(n)
+        if n == 2:
+            count += str(w1).count(str(n)) + str(w2).count(str(n)) + str(abs(w3)).count(str(n)) + str(w4).count(str(n))
+        else:
+            count += str(w1).count(str(n)) + str(w2).count(str(n)) + str(abs(w3)).count(str(n)) + str(w4).count(str(n))
+        nums.append(count)
+
+    grid = [
+        ["111" if nums[0] >= 3 else "11" if nums[0] >= 2 else "1" if nums[0] >= 1 else "—",
+         "444" if nums[3] >= 3 else "44" if nums[3] >= 2 else "4" if nums[3] >= 1 else "—",
+         "777" if nums[6] >= 3 else "77" if nums[6] >= 2 else "7" if nums[6] >= 1 else "—"],
+        ["222" if nums[1] >= 3 else "22" if nums[1] >= 2 else "2" if nums[1] >= 1 else "—",
+         "555" if nums[4] >= 3 else "55" if nums[4] >= 2 else "5" if nums[4] >= 1 else "—",
+         "888" if nums[7] >= 3 else "88" if nums[7] >= 2 else "8" if nums[7] >= 1 else "—"],
+        ["333" if nums[2] >= 3 else "33" if nums[2] >= 2 else "3" if nums[2] >= 1 else "—",
+         "666" if nums[5] >= 3 else "66" if nums[5] >= 2 else "6" if nums[5] >= 1 else "—",
+         "999" if nums[8] >= 3 else "99" if nums[8] >= 2 else "9" if nums[8] >= 1 else "—"],
+    ]
+
+    lines = [
+        "Квадрат Пифагора (Психоматрица):\n",
+        f"Рабочие числа: {w1} {w2} {w3} {w4}\n",
+        "┌──────────┬──────────┬──────────┐",
+        f"│ {grid[0][0]:>8} │ {grid[0][1]:>8} │ {grid[0][2]:>8} │",
+        f"│  (характер) │  (здоровье) │  (удача)   │",
+        "├──────────┼──────────┼──────────┤",
+        f"│ {grid[1][0]:>8} │ {grid[1][1]:>8} │ {grid[1][2]:>8} │",
+        f"│  (энергия)  │  (интуиция) │  (долг)    │",
+        "├──────────┼──────────┼──────────┤",
+        f"│ {grid[2][0]:>8} │ {grid[2][1]:>8} │ {grid[2][2]:>8} │",
+        f"│  (познание) │  (труд)    │  (память)  │",
+        "└──────────┴──────────┴──────────┘",
+        "",
+        "*Характер:* " + ("сильный" if nums[0] > 2 else "нормальный" if nums[0] > 0 else "слабый"),
+        "*Энергия:* " + ("высокая" if nums[1] > 2 else "нормальная" if nums[1] > 0 else "низкая"),
+        "*Познание:* " + ("высокий" if nums[2] > 2 else "нормальный" if nums[2] > 0 else "низкий"),
+        "*Здоровье:* " + ("крепкое" if nums[3] > 2 else "нормальное" if nums[3] > 0 else "слабое"),
+        "*Интуиция:* " + ("развитая" if nums[4] > 2 else "нормальная" if nums[4] > 0 else "слабая"),
+        "*Труд:* " + ("высокий" if nums[5] > 2 else "нормальный" if nums[5] > 0 else "низкий"),
+        "*Удача:* " + ("очень везучий" if nums[6] > 2 else "везучий" if nums[6] > 0 else "невезучий"),
+        "*Долг:* " + ("высокий" if nums[7] > 2 else "нормальный" if nums[7] > 0 else "низкий"),
+        "*Память:* " + ("отличная" if nums[8] > 2 else "нормальная" if nums[8] > 0 else "слабая"),
+    ]
+    return "\n".join(lines)
+
+
+def destiny_matrix(birth_date: str) -> dict:
+    day, month, year = map(int, birth_date.split('.'))
+    arcana = lambda n: n if n <= 22 else sum(int(d) for d in str(n))
+    return {
+        "day_arcana": arcana(day),
+        "month_arcana": arcana(month),
+        "year_arcana": arcana(sum(int(d) for d in str(year))),
+        "essence": arcana(day + month + sum(int(d) for d in str(year))),
+    }

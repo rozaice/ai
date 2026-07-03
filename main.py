@@ -13,7 +13,7 @@ from handlers.tarot import (
     tarot_menu, tarot_daily, tarot_three, tarot_relationship,
     tarot_finance, tarot_career,
 )
-from handlers.numerology import numerology_start, numerology_date, NUM_DATE
+from handlers.numerology import numerology_start, sub_section, numerology_date, numerology_date2, SUB_SECTION, NUM_DATE, NUM_DATE2
 from handlers.astrology import (
     astrology_start, sign_choice, forecast_type, follow_up,
     SIGN_CHOICE, FORECAST_TYPE, FOLLOW_UP,
@@ -32,7 +32,10 @@ def main():
     )
 
     natal_conv = ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex(r'^🔮 Натальная карта$'), natal_menu)],
+        entry_points=[
+            MessageHandler(filters.Regex(r'^🔮 Натальная карта$'), natal_menu),
+            MessageHandler(filters.Regex(r'^💞 Совместимость$'), natal_compatibility),
+        ],
         states={
             BIRTH_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, birth_date)],
             BIRTH_TIME: [MessageHandler(filters.TEXT & ~filters.COMMAND, birth_time)],
@@ -47,7 +50,9 @@ def main():
     numerology_conv = ConversationHandler(
         entry_points=[MessageHandler(filters.Regex(r'^🔢 Нумерология$'), numerology_start)],
         states={
-            NUM_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, numerology_date)]
+            SUB_SECTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, sub_section)],
+            NUM_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, numerology_date)],
+            NUM_DATE2: [MessageHandler(filters.TEXT & ~filters.COMMAND, numerology_date2)],
         },
         fallbacks=[CommandHandler('start', start)]
     )
@@ -75,10 +80,8 @@ def main():
     app.add_handler(MessageHandler(filters.Regex(r'^🔮 Прогноз на день$'), natal_forecast_day))
     app.add_handler(MessageHandler(filters.Regex(r'^📅 Прогноз на год$'), natal_forecast_year))
     app.add_handler(MessageHandler(filters.Regex(r'^📖 Общий разбор$'), natal_general))
-    app.add_handler(MessageHandler(filters.Regex(r'^💞 Совместимость$'), natal_compatibility))
-
     app.add_handler(MessageHandler(filters.Regex(r'^🎴 Предсказание на день$'), tarot_daily))
-    app.add_handler(MessageHandler(filters.Regex(r'^🃏 Расклад на трех картах$'), tarot_three))
+    app.add_handler(MessageHandler(filters.Regex(r'^🃏 Расклад на трех картах на ситуацию$'), tarot_three))
     app.add_handler(MessageHandler(filters.Regex(r'^💞 Расклад на отношения$'), tarot_relationship))
     app.add_handler(MessageHandler(filters.Regex(r'^💰 Расклад на финансы$'), tarot_finance))
     app.add_handler(MessageHandler(filters.Regex(r'^💼 Расклад на карьеру$'), tarot_career))
