@@ -1,0 +1,5 @@
+python-telegram-bot==20.8
+openai==1.12.0
+skyfield==1.49
+python-dotenv==1.0.1
+geopy==2.4.1
