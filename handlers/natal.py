@@ -14,6 +14,15 @@ NATAL_KEYBOARD = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+CHOICE_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        ['👤 Моя карта'],
+        ['👥 Карта другого человека'],
+        ['📋 Главное меню']
+    ],
+    resize_keyboard=True
+)
+
 CANCEL_KEYBOARD = ReplyKeyboardMarkup(
     [['❌ Отмена']],
     resize_keyboard=True
@@ -28,7 +37,13 @@ def _get_natal_keyboard():
 
 
 async def natal_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data.pop('chart_data', None)
+    if context.user_data.get('chart_data'):
+        await update.message.reply_text(
+            '🔮 У тебя уже есть рассчитанная карта.\n'
+            'Хочешь посмотреть её или рассчитать для другого человека?',
+            reply_markup=CHOICE_KEYBOARD
+        )
+        return BIRTH_DATE  # reuse state to catch choice
     await update.message.reply_text(
         '🔮 Для расчёта натальной карты мне нужны твои данные.\n\n'
         'Введи дату рождения в формате *ДД.ММ.ГГГГ* (например, 15.06.1995):',
@@ -43,6 +58,23 @@ async def birth_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text == '❌ Отмена':
         await update.message.reply_text('Отменено.', reply_markup=NATAL_KEYBOARD)
         return ConversationHandler.END
+
+    if context.user_data.get('chart_data'):
+        if text == '👤 Моя карта':
+            await update.message.reply_text(
+                '✅ Использую твою карту. Выбери прогноз:',
+                reply_markup=NATAL_KEYBOARD
+            )
+            return ConversationHandler.END
+        elif text == '👥 Карта другого человека':
+            context.user_data.pop('chart_data', None)
+            context.user_data.pop('diary_history', None)
+            await update.message.reply_text(
+                'Введи дату рождения этого человека в формате *ДД.ММ.ГГГГ*:',
+                parse_mode='Markdown',
+                reply_markup=CANCEL_KEYBOARD
+            )
+            return BIRTH_DATE
 
     if not DATE_RE.match(text):
         await update.message.reply_text(

@@ -12,11 +12,13 @@ CANCEL_KEYBOARD = ReplyKeyboardMarkup(
 
 
 async def diary_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        '📝 Напиши о своём состоянии, мыслях и чувствах.\n'
-        'Я проанализирую текст и дам обратную связь.',
-        reply_markup=CANCEL_KEYBOARD
-    )
+    history = context.user_data.get('diary_history')
+    msg = '📝 Напиши о своём состоянии, мыслях и чувствах.\n'
+    if history:
+        msg += 'Я помню твои прошлые записи — учту их в анализе.'
+    else:
+        msg += 'Я проанализирую текст и дам обратную связь.'
+    await update.message.reply_text(msg, reply_markup=CANCEL_KEYBOARD)
     return DIARY_TEXT
 
 
@@ -31,9 +33,11 @@ async def diary_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text('🧠 Анализирую твой текст...')
 
     try:
-        analysis = await analyze_diary(text)
+        history = context.user_data.get('diary_history')
+        analysis, new_history = await analyze_diary(text, history)
+        context.user_data['diary_history'] = new_history
         await msg.edit_text(
-            f'📝 *Результат анализа:*\n\n{analysis}',
+            f'{analysis}',
             parse_mode='Markdown'
         )
     except Exception as e:
