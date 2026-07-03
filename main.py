@@ -11,14 +11,6 @@ from handlers.tarot import tarot_menu, tarot_daily, tarot_three, tarot_relations
 
 
 def main():
-    import os
-    from config import BOT_TOKEN
-    token_val = BOT_TOKEN
-    print(f"DEBUG BOT_TOKEN: '{token_val}' (len={len(token_val) if token_val else 0})")
-    print("DEBUG ALL VARS:", dict(sorted(os.environ.items())))
-    if not token_val:
-        print("ERROR: BOT_TOKEN is empty or not set!")
-        return
     app = Application.builder().token(BOT_TOKEN).build()
 
     diary_conv = ConversationHandler(
