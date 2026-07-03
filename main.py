@@ -12,8 +12,10 @@ from handlers.tarot import tarot_menu, tarot_daily, tarot_three, tarot_relations
 
 def main():
     import os
-    token_val = os.getenv("BOT_TOKEN")
+    from config import BOT_TOKEN
+    token_val = BOT_TOKEN
     print(f"DEBUG BOT_TOKEN: '{token_val}' (len={len(token_val) if token_val else 0})")
+    print("DEBUG ALL VARS:", {k: v for k, v in sorted(os.environ.items()) if 'TOKEN' in k.upper() or 'KEY' in k.upper() or 'BOT' in k.upper()})
     if not token_val:
         print("ERROR: BOT_TOKEN is empty or not set!")
         return
